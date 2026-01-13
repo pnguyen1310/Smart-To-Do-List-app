@@ -130,53 +130,102 @@ nextact-todo/
 ## 📊 Mô Hình Machine Learning
 
 ### Giới Thiệu
-Mô hình được huấn luyện trên 2000 mẫu ghi chú đa dạng tiếng Việt để dự đoán mức độ ưu tiên của công việc một cách tự động.
+Mô hình được huấn luyện để **phân loại loại công việc** dựa trên nội dung văn bản tiếng Việt. Mô hình có khả năng nhận diện các loại công việc khác nhau như học tập, công việc văn phòng, gặp mặt cá nhân, etc.
+
+### Dataset Chi Tiết
+- **Kích thước**: 2000 mẫu đa dạng
+- **Ngôn ngữ**: Tiếng Việt
+- **Các loại công việc (Scenario)**:
+  - `TRUONG_HOC` - Công việc liên quan trường học
+  - `VAN_PHONG` - Công việc văn phòng
+  - `CA_NHAN` - Công việc cá nhân
+  
+- **Nhãn phân loại (Labels)**:
+  - `HOC_TAP` - Học tập
+  - `NOP_BAI` - Nộp bài tập
+  - `HOP_LOP` - Họp/sinh hoạt lớp
+  - `THI_CU` - Thi cử
+  - `GUI_EMAIL` - Gửi email
+  - `THEO_DOI_CONG_VIEC` - Theo dõi công việc
+  - `HEN_CA_NHAN` - Hẹn cá nhân
+  - `MUA_SAM` - Mua sắm
+  - `NHAC_VIEC` - Nhắc việc
+
+- **Đặc điểm**:
+  - Mỗi mẫu bao gồm: nội dung công việc, loại công việc, nhãn phân loại, thời gian
+  - Ví dụ: "học bài môn toán trước ngày mai" → Nhãn: `HOC_TAP`
 
 ### Kiến Trúc Mô Hình
 ```
 Pipeline (2 bước):
-├── TfidfVectorizer
+├── TfidfVectorizer (Trích xuất đặc trưng từ văn bản)
 │   ├── ngram_range: (1, 2) - Sử dụng unigram và bigram
 │   └── min_df: 2 - Bỏ qua từ xuất hiện ít hơn 2 lần
-└── LogisticRegression
+│
+└── LogisticRegression (Phân loại)
     ├── max_iter: 2000 - Số lần lặp tối đa
     └── n_jobs: 1 - Sử dụng 1 luồng xử lý
 ```
 
-### Dataset
-- **Kích thước**: 2000 mẫu đa dạng
-- **Ngôn ngữ**: Tiếng Việt
-- **Các nhãn**: Mức độ ưu tiên (High, Medium, Low)
-- **Đặc trưng**: Nội dung ghi chú
+### Quá Trình Huấn Luyện (Training)
+1. **Load Dataset**: Đọc 2000 mẫu từ CSV
+   ```python
+   X = df["text"]  # Nội dung công việc (tiếng Việt)
+   y = df["labels"]  # Nhãn phân loại (9 loại)
+   ```
 
-### Quá Trình Huấn Luyện
-1. **Chia dữ liệu**: 80% huấn luyện, 20% kiểm tra (stratified split)
-2. **Trích xuất đặc trưng**: TF-IDF vectors từ nội dung ghi chú
-3. **Mô hình phân loại**: Logistic Regression
-4. **Đánh giá**: Accuracy score và classification report
+2. **Chia Train/Test**: Tỷ lệ 80/20 với stratified split
+   ```
+   Training: 1600 mẫu (80%)
+   Testing: 400 mẫu (20%)
+   ```
 
-### Cách Sử Dụng
-Gửi request tới API:
+3. **Trích Xuất Đặc Trưng**: Chuyển văn bản thành vectors
+   - TF-IDF Vectors từ unigrams và bigrams
+   - Loại bỏ từ hiếm gặp
+
+4. **Huấn Luyện Mô Hình**: Logistic Regression học các mẫu
+   - Tìm ranh giới quyết định giữa các lớp
+   - Điều chỉnh trọng số cho mỗi từ
+
+5. **Đánh Giá Kết Quả**:
+   - Tính Accuracy Score trên tập test
+   - In ra Classification Report (Precision, Recall, F1-Score)
+
+6. **Lưu Mô Hình**: Lưu dưới dạng joblib file
+   ```
+   Model saved: nextact_model.joblib
+   ```
+
+### Cách Sử Dụng Mô Hình
+Gửi request tới API để phân loại công việc:
 ```bash
-POST /api/nextact/predict
+POST /api/nextact/classify
 {
-  "text": "Nội dung ghi chú cần dự đoán ưu tiên"
+  "text": "học bài môn toán trước ngày mai"
 }
 ```
 
 **Response**:
 ```json
 {
-  "priority": "High",
-  "confidence": 0.92
+  "classification": "HOC_TAP",
+  "confidence": 0.95
 }
 ```
 
+### Các Tính Năng Bổ Sung
+Mô hình cũng tích hợp:
+- **Trích xuất deadline**: Phân tích cụm từ thời gian ("ngày mai", "thứ 6", etc.)
+- **Hỗ trợ Gemini AI**: Sử dụng Google Generative AI để đưa gợi ý bổ sung
+- **Phân tích toàn diện**: Kết hợp phân loại + thời gian + AI suggestions
+
 ### Cải Tiến Trong Tương Lai
-- Thêm nhiều đặc trưng (thời gian, thẻ, etc.)
-- Sử dụng mô hình deep learning (LSTM, BERT)
-- Huấn luyện lại với dữ liệu mới
-- Tối ưu hóa thông số mô hình
+- 🔄 Thêm nhiều loại công việc và nhãn mới
+- 📊 Mở rộng dataset lên 5000-10000 mẫu
+- 🤖 Sử dụng mô hình deep learning (LSTM, BERT)
+- ⚙️ Fine-tuning với dữ liệu từ người dùng thực tế
+- 🎯 Tối ưu hóa thông số mô hình (hyperparameter tuning)
 
 ## 📜 Bản Quyền và Thông Tin Liên Hệ
 
