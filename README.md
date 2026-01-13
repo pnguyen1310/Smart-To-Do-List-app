@@ -129,8 +129,59 @@ nextact-todo/
 
 ## 📊 Mô Hình Machine Learning
 
-Mô hình được huấn luyện trên 2000 mẫu ghi chú đa dạng tiếng Việt để dự đoán mức độ ưu tiên của công việc.
+### Giới Thiệu
+Mô hình được huấn luyện trên 2000 mẫu ghi chú đa dạng tiếng Việt để dự đoán mức độ ưu tiên của công việc một cách tự động.
 
-## Bản quyền và thông tin liên hệ
-Nguyễn Đào Phúc Nguyên
-nguyendaophucnguyen13@gmail.com
+### Kiến Trúc Mô Hình
+```
+Pipeline (2 bước):
+├── TfidfVectorizer
+│   ├── ngram_range: (1, 2) - Sử dụng unigram và bigram
+│   └── min_df: 2 - Bỏ qua từ xuất hiện ít hơn 2 lần
+└── LogisticRegression
+    ├── max_iter: 2000 - Số lần lặp tối đa
+    └── n_jobs: 1 - Sử dụng 1 luồng xử lý
+```
+
+### Dataset
+- **Kích thước**: 2000 mẫu đa dạng
+- **Ngôn ngữ**: Tiếng Việt
+- **Các nhãn**: Mức độ ưu tiên (High, Medium, Low)
+- **Đặc trưng**: Nội dung ghi chú
+
+### Quá Trình Huấn Luyện
+1. **Chia dữ liệu**: 80% huấn luyện, 20% kiểm tra (stratified split)
+2. **Trích xuất đặc trưng**: TF-IDF vectors từ nội dung ghi chú
+3. **Mô hình phân loại**: Logistic Regression
+4. **Đánh giá**: Accuracy score và classification report
+
+### Cách Sử Dụng
+Gửi request tới API:
+```bash
+POST /api/nextact/predict
+{
+  "text": "Nội dung ghi chú cần dự đoán ưu tiên"
+}
+```
+
+**Response**:
+```json
+{
+  "priority": "High",
+  "confidence": 0.92
+}
+```
+
+### Cải Tiến Trong Tương Lai
+- Thêm nhiều đặc trưng (thời gian, thẻ, etc.)
+- Sử dụng mô hình deep learning (LSTM, BERT)
+- Huấn luyện lại với dữ liệu mới
+- Tối ưu hóa thông số mô hình
+
+## 📜 Bản Quyền và Thông Tin Liên Hệ
+
+### Tác Giả
+**Nguyễn Đào Phúc Nguyên**
+
+### Thông Tin Liên Hệ
+📧 **Email**: [nguyendaophucnguyen13@gmail.com](mailto:nguyendaophucnguyen13@gmail.com)
