@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Công Việc</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 { 
+            font-size: 28px; 
+            color: #333;
+            font-weight: 600;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #4a7ef3;
+            color: white;
+        }
+        .btn-primary:hover { 
+            background: #3a6fd9;
+        }
+        .btn-logout {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .btn-logout:hover {
+            background: #f5f5f5;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+        }
+        .sidebar {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            height: fit-content;
+        }
+        .sidebar h2 { 
+            color: #333; 
+            margin-bottom: 20px; 
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .stats { 
+            color: #666; 
+            font-size: 13px;
+        }
+        .stats p { 
+            margin: 12px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .stats strong { 
+            color: #4a7ef3;
+            font-weight: 600;
+        }
+        .main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .notes-box {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .notes-box h2 { 
+            color: #333; 
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .note-card {
+            background: #fafafa;
+            padding: 18px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .note-card:hover {
+            border-color: #ddd;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .note-card h3 { 
+            color: #333; 
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .note-card p { 
+            color: #666; 
+            font-size: 13px; 
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .note-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-small {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-edit { 
+            background: #4a7ef3; 
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #3a6fd9;
+        }
+        .btn-delete { 
+            background: #ff6347; 
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #e85335;
+        }
+        .empty { 
+            text-align: center; 
+            padding: 60px 20px; 
+            color: #999;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .modal-header { 
+            font-size: 18px; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            color: #333;
+        }
+        .close { 
+            float: right; 
+            font-size: 24px; 
+            cursor: pointer; 
+            color: #999;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .close:hover { color: #333; }
+        .form-group { 
+            margin-bottom: 16px;
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            color: #555; 
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4a7ef3;
+        }
+        .form-group textarea { 
+            min-height: 100px;
+            resize: vertical;
+        }
+        .modal-actions { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 24px;
+        }
+        .modal-actions button { 
+            flex: 1; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-save { 
+            background: #4a7ef3; 
+            color: white;
+        }
+        .btn-save:hover {
+            background: #3a6fd9;
+        }
+        .btn-cancel { 
+            background: #eee; 
+            color: #333;
+        }
+        .btn-cancel:hover {
+            background: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Hệ Thống Quản Lý Công Việc</h1>
+            <div class="header-buttons">
+                <button class="btn btn-primary" onclick="openAddNoteModal()">Tạo Ghi Chú</button>
+                <button class="btn btn-primary" onclick="openQuickAddModal()">Tạo Nhanh</button>
+                <button class="btn btn-logout" onclick="logout()">Đăng Xuất</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <h2>Thống Kê</h2>
+                <div class="stats">
+                    <p>
+                        <span>Tổng Ghi Chú</span>
+                        <strong id="total">0</strong>
+                    </p>
+                    <p>
+                        <span>Có Hạn Chót</span>
+                        <strong id="withDeadline">0</strong>
+                    </p>
+                    <p>
+                        <span>Ưu Tiên Cao</span>
+                        <strong id="highPriority">0</strong>
+                    </p>
+                    <p>
+                        <span>Không Có Hạn Chót</span>
+                        <strong id="noDeadline">0</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div class="main">
+                <div class="notes-box">
+                    <h2>Công Việc Của Tôi</h2>
+                    <div class="notes-grid" id="notesGrid">
+                        <div class="empty">Chưa có ghi chú nào</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Ghi Chú -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeAddNoteModal()">&times;</button>
+            <div class="modal-header">Tạo Ghi Chú</div>
+            <form id="addForm" onsubmit="addNote(event)">
+                <div class="form-group">
+                    <label>Tiêu Đề</label>
+                    <input type="text" id="addTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Mô Tả</label>
+                    <textarea id="addContent"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ưu Tiên</label>
+                    <select id="addPriority">
+                        <option value="1">Thấp</option>
+                        <option value="2">Trung Bình</option>
+                        <option value="3">Cao</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hạn Chót</label>
+                    <input type="date" id="addDueDate">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">Tạo</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddNoteModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Nhanh -->
+    <div class="modal" id="quickModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeQuickAddModal()">&times;</button>
+            <div class="modal-header">Tạo Nhanh</div>
+            <form id="quickForm" onsubmit="quickAdd(event)">
+                <div class="form-group">
+                    <label>Tiêu Đề</label>
+                    <input type="text" id="quickTitle" required oninput="classifyTodo()">
+                </div>
+                <input type="hidden" id="quickDueDate">
+                <div class="form-group" id="classifyResult" style="display: none;">
+                    <label>Phân Tích Tự Động</label>
+                    <div style="background: #f0f4ff; padding: 12px; border-radius: 4px; border-left: 3px solid #4a7ef3;">
+                        <div style="margin-bottom: 8px;">
+                            <strong id="categoryName" style="color: #333;"></strong>
+                            <span id="confidenceScore" style="color: #4a7ef3; font-weight: 600; margin-left: 10px;"></span>
+                        </div>
+                        <div id="deadlineResult" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd;">
+                            <small style="color: #666;">Hạn chót: <strong id="deadlineValue" style="color: #ff6b6b;"></strong></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">Thêm</button>
+                    <button type="button" class="btn-cancel" onclick="closeQuickAddModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Chỉnh Sửa -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeEditModal()">&times;</button>
+            <div class="modal-header">Chỉnh Sửa Ghi Chú</div>
+            <form id="editForm" onsubmit="updateNote(event)">
+                <div class="form-group">
+                    <label>Tiêu Đề</label>
+                    <input type="text" id="editTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Mô Tả</label>
+                    <textarea id="editContent"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ưu Tiên</label>
+                    <select id="editPriority">
+                        <option value="1">Thấp</option>
+                        <option value="2">Trung Bình</option>
+                        <option value="3">Cao</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hạn Chót</label>
+                    <input type="date" id="editDueDate">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">Lưu</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xem Chi Tiết -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; display: flex; flex-direction: column;">
+            <button class="close" onclick="closeDetailModal()">&times;</button>
+            <div class="modal-header">Chi Tiết Công Việc</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; flex: 1;">
+                <!-- Phần thông tin chi tiết -->
+                <div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: #999; font-size: 12px; font-weight: 600;">TIÊU ĐỀ</label>
+                        <h2 id="detailTitle" style="color: #333; margin: 8px 0; font-size: 18px;"></h2>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: #999; font-size: 12px; font-weight: 600;">MÔ TẢ</label>
+                        <p id="detailContent" style="color: #666; margin: 8px 0; line-height: 1.6;"></p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <div>
+                            <label style="color: #999; font-size: 12px; font-weight: 600;">ƯU TIÊN</label>
+                            <p id="detailPriority" style="color: #666; margin: 8px 0;"></p>
+                        </div>
+                        <div>
+                            <label style="color: #999; font-size: 12px; font-weight: 600;">HẠN CHÓT</label>
+                            <p id="detailDueDate" style="color: #666; margin: 8px 0;"></p>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: #999; font-size: 12px; font-weight: 600;">NGÀY TẠO</label>
+                        <p id="detailCreatedAt" style="color: #666; margin: 8px 0;"></p>
+                    </div>
+                    <div id="detailQuickAdd" style="display: none; background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+                        <p style="color: #ff9800; font-weight: 600; margin: 0;">⚡ Được tạo nhanh</p>
+                    </div>
+                </div>
+                
+                <!-- Phần chat -->
+                <div class="chat-box-container">
+                    <div class="chat-box-header">
+                        <h3>💡 Trợ Lý Gợi Ý</h3>
+                    </div>
+                    <div id="chatMessages" class="chat-box-messages">
+                        <div class="chat-msg bot-msg">
+                            👋 Hỏi tôi về cách chuẩn bị cho công việc này!
+                        </div>
+                    </div>
+                    <div class="chat-box-input">
+                        <input type="text" id="chatInput" placeholder="Nhập câu hỏi..." class="chat-box-input-field">
+                        <button onclick="sendChatMessage()" class="chat-box-send-btn">Gửi</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút actions -->
+            <div style="padding: 16px; border-top: 1px solid #eee; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="openEditModalFromDetail()" style="flex: 1;">Sửa</button>
+                <button class="btn" style="flex: 1; background: #ff6b6b; color: white;" onclick="deleteAndClose()">Xóa</button>
+                <button type="button" class="btn" onclick="closeDetailModal()" style="flex: 1; background: #eee; color: #333;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .chat-box-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .chat-box-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #4a7ef3 0%, #357ae8 100%);
+        }
+
+        .chat-box-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .chat-box-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 200px;
+        }
+
+        .chat-msg {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            max-width: 90%;
+            animation: slideInChat 0.3s ease-out;
+        }
+
+        @keyframes slideInChat {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-msg.bot-msg {
+            background: #e3f2fd;
+            color: #1976d2;
+            align-self: flex-start;
+            border-left: 3px solid #1976d2;
+        }
+
+        .chat-msg.user-msg {
+            background: #4a7ef3;
+            color: white;
+            align-self: flex-end;
+            border-right: 3px solid #357ae8;
+        }
+
+        .chat-msg.error-msg {
+            background: #ffebee;
+            color: #c62828;
+            align-self: flex-start;
+            border-left: 3px solid #c62828;
+        }
+
+        /* Typing indicator animation */
+        .typing-indicator {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+            align-self: flex-start;
+            border-left: 3px solid #1976d2;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            min-width: 60px;
+            animation: slideInChat 0.3s ease-out;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1976d2;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .chat-box-input {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .chat-box-input-field {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .chat-box-input-field:focus {
+            outline: none;
+            border-color: #4a7ef3;
+            box-shadow: 0 0 0 3px rgba(74, 126, 243, 0.1);
+        }
+
+        .chat-box-send-btn {
+            background: #4a7ef3;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .chat-box-send-btn:hover {
+            background: #3a6fd9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 126, 243, 0.3);
+        }
+
+        .chat-box-send-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar styling */
+        .chat-box-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-box-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-box-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .chat-box-messages::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+
+    <script>
+        let allNotes = [];
+        let editId = null;
+
+        function getToken() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                throw new Error('Không tìm thấy token');
+            }
+            return token;
+        }
+
+        function getHeaders() {
+            return {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            };
+        }
+
+        window.addEventListener('DOMContentLoaded', loadNotes);
+
+        async function loadNotes() {
+            try {
+                const res = await fetch('/notes', {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.clear();
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error('Lỗi tải ghi chú');
+                }
+                allNotes = await res.json();
+                updateStats();
+                renderNotes();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total').textContent = allNotes.length;
+            document.getElementById('withDeadline').textContent = allNotes.filter(n => n.due_date).length;
+            document.getElementById('highPriority').textContent = allNotes.filter(n => n.priority === 3).length;
+            document.getElementById('noDeadline').textContent = allNotes.filter(n => !n.due_date).length;
+        }
+
+        function renderNotes() {
+            const grid = document.getElementById('notesGrid');
+            if (allNotes.length === 0) {
+                grid.innerHTML = '<div class="empty">No tasks yet</div>';
+                return;
+            }
+            grid.innerHTML = allNotes.map(n => {
+                const content = n.is_quick_add ? '<p style="color: #ff9800; font-style: italic;">✨ Được tạo nhanh</p>' : '<p>' + esc(n.content) + '</p>';
+                const badge = n.is_quick_add ? '<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">⚡ Tạo Nhanh</span>' : '';
+                const style = n.is_quick_add ? 'style="border-left: 4px solid #ff9800; background: #fffbf0; cursor: pointer;"' : 'style="cursor: pointer;"';
+                return `
+                <div class="note-card" ${style} onclick="openDetailModal(${n.id})">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <h3>${esc(n.title)}</h3>
+                        ${badge}
+                    </div>
+                    ${content}
+                    <div class="note-meta">
+                        <span>${n.due_date ? `${n.due_date}` : 'Không có hạn chót'}</span>
+                        <span>${formatDate(n.created_at)}</span>
+                    </div>
+                    <div class="note-actions" onclick="event.stopPropagation();">
+                        <button class="btn-small btn-edit" onclick="openEditModal(${n.id})">Sửa</button>
+                        <button class="btn-small btn-delete" onclick="delNote(${n.id})">Xóa</button>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        async function addNote(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('title', document.getElementById('addTitle').value);
+            fd.append('content', document.getElementById('addContent').value);
+            fd.append('status', 'todo');
+            fd.append('priority', document.getElementById('addPriority').value);
+            fd.append('due_date', document.getElementById('addDueDate').value || '');
+            try {
+                const res = await fetch('/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: fd
+                });
+                if (res.ok) {
+                    closeAddNoteModal();
+                    loadNotes();
+                } else {
+                    alert('Lỗi tạo ghi chú');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối');
+            }
+        }
+
+        async function quickAdd(e) {
+            e.preventDefault();
+            const title = document.getElementById('quickTitle').value;
+            const dueDate = document.getElementById('quickDueDate').value || '';
+            const fd = new FormData();
+            fd.append('title', title);
+            fd.append('content', '');
+            fd.append('status', 'todo');
+            fd.append('priority', '2');
+            fd.append('due_date', dueDate);
+            fd.append('is_quick_add', 'true');
+            try {
+                const res = await fetch('/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: fd
+                });
+                if (res.ok) {
+                    closeQuickAddModal();
+                    loadNotes();
+                } else {
+                    alert('Lỗi tạo ghi chú');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối');
+            }
+        }
+
+        async function classifyTodo() {
+            const text = document.getElementById('quickTitle').value;
+            if (text.length < 3) {
+                document.getElementById('classifyResult').style.display = 'none';
+                return;
+            }
+            try {
+                const res = await fetch('/nextact/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('categoryName').textContent = `📌 ${data.category}`;
+                    document.getElementById('confidenceScore').textContent = `${data.confidence}%`;
+                    document.getElementById('classifyResult').style.display = 'block';
+                    
+                    // Xử lý hạn chót
+                    if (data.deadline) {
+                        document.getElementById('deadlineValue').textContent = data.deadline;
+                        document.getElementById('deadlineResult').style.display = 'block';
+                        document.getElementById('quickDueDate').value = data.deadline;
+                    } else {
+                        document.getElementById('deadlineResult').style.display = 'none';
+                        document.getElementById('quickDueDate').value = '';
+                    }
+                }
+            } catch (e) {
+                console.error('Classification error:', e);
+            }
+        }
+
+        async function openEditModal(id) {
+            const n = allNotes.find(x => x.id === id);
+            editId = id;
+            document.getElementById('editTitle').value = n.title;
+            document.getElementById('editContent').value = n.content;
+            document.getElementById('editPriority').value = n.priority;
+            document.getElementById('editDueDate').value = n.due_date ? n.due_date.split('T')[0] : '';
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        async function updateNote(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('title', document.getElementById('editTitle').value);
+            fd.append('content', document.getElementById('editContent').value);
+            fd.append('status', 'todo');
+            fd.append('priority', document.getElementById('editPriority').value);
+            fd.append('due_date', document.getElementById('editDueDate').value || '');
+            try {
+                const res = await fetch(`/notes/${editId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: fd
+                });
+                if (res.ok) {
+                    closeEditModal();
+                    loadNotes();
+                } else {
+                    alert('Lỗi cập nhật ghi chú');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối');
+            }
+        }
+
+        async function delNote(id) {
+            if (!confirm('Bạn chắc chắn muốn xóa ghi chú này?')) return;
+            try {
+                const res = await fetch(`/notes/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (res.ok) {
+                    loadNotes();
+                } else {
+                    alert('Lỗi xóa ghi chú');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối');
+            }
+        }
+
+        function openAddNoteModal() { document.getElementById('addModal').classList.add('show'); }
+        function closeAddNoteModal() { document.getElementById('addModal').classList.remove('show'); document.getElementById('addForm').reset(); }
+        function openQuickAddModal() { document.getElementById('quickModal').classList.add('show'); }
+        function closeQuickAddModal() { document.getElementById('quickModal').classList.remove('show'); document.getElementById('quickForm').reset(); }
+        function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
+        
+        function openDetailModal(id) {
+            const n = allNotes.find(x => x.id === id);
+            if (!n) return;
+            document.getElementById('detailTitle').textContent = n.title;
+            document.getElementById('detailContent').textContent = n.content || '(Không có mô tả)';
+            document.getElementById('detailPriority').textContent = ['', 'Thấp', 'Trung Bình', 'Cao'][n.priority];
+            document.getElementById('detailDueDate').textContent = n.due_date ? n.due_date : 'Không có';
+            document.getElementById('detailCreatedAt').textContent = formatDate(n.created_at);
+            
+            if (n.is_quick_add) {
+                document.getElementById('detailQuickAdd').style.display = 'block';
+            } else {
+                document.getElementById('detailQuickAdd').style.display = 'none';
+            }
+            
+            window.currentDetailId = id;
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function openEditModalFromDetail() {
+            closeDetailModal();
+            openEditModal(window.currentDetailId);
+        }
+        
+        function deleteAndClose() {
+            if (confirm('Bạn chắc chắn muốn xóa ghi chú này?')) {
+                delNote(window.currentDetailId);
+                closeDetailModal();
+            }
+        }
+        
+        // Hàm render markdown đơn giản
+        function renderMarkdown(text) {
+            if (!text) return '';
+            // Convert **text** -> <strong>text</strong>
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Convert \n -> <br>
+            text = text.replace(/\n/g, '<br>');
+            return text;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const n = allNotes.find(x => x.id === window.currentDetailId);
+            if (!n) return;
+            
+            // Thêm message người dùng vào chat
+            const messagesDiv = document.getElementById('chatMessages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-msg user-msg';
+            userMsg.textContent = message;
+            messagesDiv.appendChild(userMsg);
+            
+            // Thêm typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            typingIndicator.id = 'typingIndicator';
+            messagesDiv.appendChild(typingIndicator);
+            
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            try {
+                const res = await fetch('/nextact/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        task_title: n.title,
+                        task_description: n.content || '',
+                        due_date: n.due_date || '',
+                        message: message
+                    })
+                });
+                
+                // Xóa typing indicator
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.remove();
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    const botMsg = document.createElement('div');
+                    botMsg.className = 'chat-msg bot-msg';
+                    botMsg.innerHTML = renderMarkdown(data.reply);
+                    messagesDiv.appendChild(botMsg);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                    const errMsg = document.createElement('div');
+                    errMsg.className = 'chat-msg error-msg';
+                    errMsg.textContent = 'Lỗi: Không thể lấy gợi ý';
+                    messagesDiv.appendChild(errMsg);
+                }
+            } catch (e) {
+                // Xóa typing indicator
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.remove();
+                
+                const errMsg = document.createElement('div');
+                errMsg.className = 'chat-msg error-msg';
+                errMsg.textContent = 'Lỗi kết nối: ' + e.message;
+                messagesDiv.appendChild(errMsg);
+            }
+        }
+        
+        // Enter key để gửi message
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('chatInput') === document.activeElement) {
+                sendChatMessage();
+            }
+        });
+        
+        function logout() { if(confirm('Bạn muốn đăng xuất?')) location.href = '/login'; }
+        function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function formatDate(dt) {
+            if (!dt) return '';
+            const d = new Date(dt);
+            const day = d.getDate().toString().padStart(2, '0');
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = d.getHours().toString().padStart(2, '0');
+            const mins = d.getMinutes().toString().padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${mins}`;
+        }
+    </script>
+</body>
+</html>
