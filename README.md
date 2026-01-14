@@ -62,7 +62,7 @@ Tạo cơ sở dữ liệu PostgreSQL và chạy schema:
 ```bash
 psql -U <username> -d <database_name> -f database/schema.sql
 ```
-
+nextact_todo_db
 ### 5. Cấu hình biến môi trường
 
 Tạo file `.env` trong thư mục `backend/`:
@@ -234,3 +234,4 @@ Mô hình cũng tích hợp:
 
 ### Thông Tin Liên Hệ
 📧 **Email**: [nguyendaophucnguyen13@gmail.com](mailto:nguyendaophucnguyen13@gmail.com)
+
